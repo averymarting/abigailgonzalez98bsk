@@ -1,13 +1,9 @@
 name: Bluesky Auto Poster
-
 on:
   schedule:
-    # Fires every 5h50m. With concurrency below, this acts as a restart
-    # trigger: if the previous run is still alive it's a no-op; if GitHub
-    # already killed the previous run at the 6-hour hard limit, this
-    # starts a fresh one. The script itself handles the 5-minute posting
-    # cadence internally via its own loop.
-    - cron: "0,50 */5 * * *"
+    # Runs 3 times per day, 8 hours apart, every day:
+    # 00:00 UTC, 08:00 UTC, 16:00 UTC
+    - cron: "0 0,8,16 * * *"
   workflow_dispatch: {}   # manual trigger from the Actions tab
 
 # Only one instance of the poster should ever be active at a time
@@ -19,8 +15,13 @@ jobs:
   post:
     runs-on: ubuntu-latest
     timeout-minutes: 355   # just under GitHub's 360-minute hard cap per job
-
     steps:
+      - name: Check IP address
+        run: |
+          IP=$(curl -s https://api.ipify.org)
+          echo "Runner public IP: $IP"
+          echo "RUNNER_IP=$IP" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v4
